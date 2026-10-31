@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --navy-base: #0B1A33;
+    --navy-panel: #122544;
+    --navy-panel-glass: rgba(18, 37, 68, 0.78);
+    --navy-border: rgba(59, 130, 246, 0.2);
+    --blue-accent: #3B82F6;
+    --text-offwhite: #F2F4F8;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    background-color: #0B1A33;
+    color: #F2F4F8;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans Arabic", "Segoe UI Arabic", "Cairo", Arial, sans-serif;
+  }
+
+  body {
+    background-color: #0B1A33;
+    color: #F2F4F8;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background-color: #3B82F6;
+    color: #0B1A33;
+  }
+}
+
+/* Remove scroll bar on mobile view */
+@media (max-width: 768px) {
+  html,
+  body {
+    -ms-overflow-style: none !important;
+    scrollbar-width: none !important;
+  }
+
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar,
+  ::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+}
+
+/* Glass panel utility */
+.glass-panel {
+  background-color: rgba(18, 37, 68, 0.78);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.glass-panel-hover {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-panel-hover:hover {
+  background-color: rgba(18, 37, 68, 0.9);
+  border-color: rgba(59, 130, 246, 0.45);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px -10px rgba(59, 130, 246, 0.15);
+}
+
+/* Pulse animation for floating WhatsApp button glass ring */
+@keyframes glassPulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.25;
+  }
+  100% {
+    transform: scale(1.28);
+    opacity: 0;
+  }
+}
+
+.animate-glass-ring {
+  animation: glassPulse 2.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
