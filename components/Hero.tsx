@@ -7,10 +7,14 @@ import { useLocale } from '@/lib/locale-context';
 
 export default function Hero() {
   const { t } = useLocale();
-  const [imageError, setImageError] = useState(false);
+  const [mobileImgError, setMobileImgError] = useState(false);
+  const [desktopImgError, setDesktopImgError] = useState(false);
 
-  const heroImageUrl =
+  const desktopHeroImageUrl =
     'https://ik.imagekit.io/imgy4/Images%20used%20in%20websites/Neon%20Kuwait%20Skyline%20Office%20at%20Night.png';
+
+  const mobileHeroImageUrl =
+    'https://ik.imagekit.io/imgy4/Images%20used%20in%20websites/Neon%20Kuwait%20Skyline%20Workspace.png';
 
   return (
     <section
@@ -19,18 +23,38 @@ export default function Hero() {
     >
       {/* Full-bleed background image container */}
       <div className="absolute inset-0 z-0 bg-[#0B1A33]">
-        {!imageError && (
-          <Image
-            src={heroImageUrl}
-            alt=""
-            fill
-            priority
-            sizes="100vw"
-            referrerPolicy="no-referrer"
-            className="object-cover object-center scale-105 motion-safe:transition-transform motion-safe:duration-1000"
-            onError={() => setImageError(true)}
-          />
+        {/* Mobile background image (< 768px) */}
+        {!mobileImgError && (
+          <div className="relative w-full h-full block md:hidden">
+            <Image
+              src={mobileHeroImageUrl}
+              alt=""
+              fill
+              priority
+              sizes="100vw"
+              referrerPolicy="no-referrer"
+              className="object-cover object-center scale-105 motion-safe:transition-transform motion-safe:duration-1000"
+              onError={() => setMobileImgError(true)}
+            />
+          </div>
         )}
+
+        {/* Desktop & tablet background image (>= 768px) */}
+        {!desktopImgError && (
+          <div className="relative w-full h-full hidden md:block">
+            <Image
+              src={desktopHeroImageUrl}
+              alt=""
+              fill
+              priority
+              sizes="100vw"
+              referrerPolicy="no-referrer"
+              className="object-cover object-center scale-105 motion-safe:transition-transform motion-safe:duration-1000"
+              onError={() => setDesktopImgError(true)}
+            />
+          </div>
+        )}
+
         {/* Dark navy overlay ensuring strict WCAG AAA contrast and seamless tone */}
         <div className="absolute inset-0 bg-gradient-to-b from-[#0B1A33]/80 via-[#0B1A33]/65 to-[#0B1A33]" />
         {/* Subtle radial glow in accent blue behind the text */}
