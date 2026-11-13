@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   title: 'Omar Al-Shatti | Computer Science Portfolio',
   description:
     'Bilingual computer science student portfolio for Omar Al-Shatti at Gulf University. Coursework, web systems projects, and student work.',
+  icons: {
+    icon: 'https://ik.imagekit.io/imgy4/Images%20used%20in%20websites/p8.png',
+    shortcut: 'https://ik.imagekit.io/imgy4/Images%20used%20in%20websites/p8.png',
+    apple: 'https://ik.imagekit.io/imgy4/Images%20used%20in%20websites/p8.png',
+  },
   openGraph: {
     title: 'Omar Al-Shatti | Computer Science Portfolio',
     description:
