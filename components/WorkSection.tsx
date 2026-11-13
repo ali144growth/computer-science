@@ -9,7 +9,7 @@ export default function WorkSection() {
   const { t, projects } = useLocale();
 
   return (
-    <section id="work" aria-label={t.work.sectionTitle} className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8">
+    <section id="work" aria-label={t.work.sectionTitle} className="pt-16 sm:pt-20 pb-10 sm:pb-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
         {/* Section header with minimal dot indicator */}
         <div className="mb-12 sm:mb-16 flex items-center gap-3">

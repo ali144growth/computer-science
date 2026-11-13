@@ -1,9 +1,16 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { collection, doc, getDoc, getDocs, orderBy, query } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { DEFAULT_PROJECTS, PortfolioProject } from '@/lib/default-projects';
 
 export type Locale = 'en' | 'ar';
 export type Direction = 'ltr' | 'rtl';
+
+export const DEMO_PROJECTS_STORAGE_KEY = 'portfolio_demo_projects_v1';
+export const DEMO_SETTINGS_STORAGE_KEY = 'portfolio_demo_settings_v1';
+export const DEMO_CV_STORAGE_KEY = 'portfolio_demo_cv_v1';
 
 interface ProjectItem {
   id: string;
@@ -39,147 +46,82 @@ interface Translations {
     githubLabel: string;
     linkedinLabel: string;
   };
+  footer: {
+    copyright: string;
+    dashboardLink: string;
+    lastUpdatedPrefix: string;
+  };
   whatsappAria: string;
 }
 
-const contentData: Record<Locale, { t: Translations; projects: ProjectItem[] }> = {
+const contentData: Record<Locale, Translations> = {
   en: {
-    t: {
-      nav: {
-        work: 'Work',
-        contact: 'Contact',
-        switchLang: 'العربية',
-        langLabel: 'Switch to Arabic',
-      },
-      hero: {
-        headline: 'Omar Al-Shatti',
-      },
-      work: {
-        sectionTitle: 'Web Development Projects',
-        viewDemo: 'View Demo',
-      },
-      contact: {
-        sectionTitle: 'Contact',
-        phoneLabel: 'Phone',
-        phoneValue: '+965 6677 3399',
-        whatsappLabel: 'WhatsApp',
-        whatsappValue: '+965 6677 3399',
-        emailLabel: 'Email',
-        emailValue: 'omar.alshatti@example.com',
-        locationLabel: 'Location',
-        locationValue: 'Kuwait City, Kuwait',
-        githubLabel: 'GitHub',
-        linkedinLabel: 'LinkedIn',
-      },
-      whatsappAria: 'Chat on WhatsApp',
+    nav: {
+      work: 'Work',
+      contact: 'Contact',
+      switchLang: 'العربية',
+      langLabel: 'Switch to Arabic',
     },
-    projects: [
-      {
-        id: 'p1',
-        title: 'Construction Company Landing Page',
-        image: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=900&q=80',
-        demoUrl: 'https://github.com/omaralshatti/construction-landing-page',
-      },
-      {
-        id: 'p2',
-        title: 'University LMS Learning Management System',
-        image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=900&q=80',
-        demoUrl: 'https://github.com/omaralshatti/university-lms-portal',
-      },
-      {
-        id: 'p3',
-        title: 'Website Figma Design System',
-        image: 'https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=900&q=80',
-        demoUrl: 'https://github.com/omaralshatti/figma-web-design-system',
-      },
-      {
-        id: 'p4',
-        title: 'Real Estate Property Portal Website',
-        image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=900&q=80',
-        demoUrl: 'https://github.com/omaralshatti/real-estate-portal',
-      },
-      {
-        id: 'p5',
-        title: 'Medical Clinic Appointment Website',
-        image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=900&q=80',
-        demoUrl: 'https://github.com/omaralshatti/clinic-appointment-site',
-      },
-      {
-        id: 'p6',
-        title: 'Modern E-Commerce Storefront Website',
-        image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=900&q=80',
-        demoUrl: 'https://github.com/omaralshatti/ecommerce-storefront-web',
-      },
-    ],
+    hero: {
+      headline: 'Omar Al-Shatti',
+    },
+    work: {
+      sectionTitle: 'Web Development Projects',
+      viewDemo: 'View Demo',
+    },
+    contact: {
+      sectionTitle: 'Contact',
+      phoneLabel: 'Phone',
+      phoneValue: '+965 6677 3399',
+      whatsappLabel: 'WhatsApp',
+      whatsappValue: '+965 6677 3399',
+      emailLabel: 'Email',
+      emailValue: 'omar.alshatti@example.com',
+      locationLabel: 'Location',
+      locationValue: 'Kuwait City, Kuwait',
+      githubLabel: 'GitHub',
+      linkedinLabel: 'LinkedIn',
+    },
+    footer: {
+      copyright: '© 2026 Omar Al-Shatti. Computer Science Student, Gulf University.',
+      dashboardLink: 'Dashboard',
+      lastUpdatedPrefix: 'Last updated',
+    },
+    whatsappAria: 'Chat on WhatsApp',
   },
   ar: {
-    t: {
-      nav: {
-        work: 'الأعمال',
-        contact: 'التواصل',
-        switchLang: 'English',
-        langLabel: 'التحويل إلى الإنجليزية',
-      },
-      hero: {
-        headline: 'عمر الشطي',
-      },
-      work: {
-        sectionTitle: 'مشاريع تطوير المواقع',
-        viewDemo: 'عرض المشروع',
-      },
-      contact: {
-        sectionTitle: 'التواصل',
-        phoneLabel: 'الهاتف',
-        phoneValue: '+965 6677 3399',
-        whatsappLabel: 'واتساب',
-        whatsappValue: '+965 6677 3399',
-        emailLabel: 'البريد الإلكتروني',
-        emailValue: 'omar.alshatti@example.com',
-        locationLabel: 'الموقع',
-        locationValue: 'مدينة الكويت، الكويت',
-        githubLabel: 'جيت هَب',
-        linkedinLabel: 'لينكد إن',
-      },
-      whatsappAria: 'تواصل عبر واتساب',
+    nav: {
+      work: 'الأعمال',
+      contact: 'التواصل',
+      switchLang: 'English',
+      langLabel: 'التحويل إلى الإنجليزية',
     },
-    projects: [
-      {
-        id: 'p1',
-        title: 'صفحة هبوط لشركة مقاولات وإنشاءات',
-        image: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=900&q=80',
-        demoUrl: 'https://github.com/omaralshatti/construction-landing-page',
-      },
-      {
-        id: 'p2',
-        title: 'نظام إدارة التعلم الجامعي الإلكتروني LMS',
-        image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=900&q=80',
-        demoUrl: 'https://github.com/omaralshatti/university-lms-portal',
-      },
-      {
-        id: 'p3',
-        title: 'تصميم واجهة موقع إلكتروني عبر فيغما',
-        image: 'https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=900&q=80',
-        demoUrl: 'https://github.com/omaralshatti/figma-web-design-system',
-      },
-      {
-        id: 'p4',
-        title: 'موقع وبوابة عقارية تفاعلية للبحث عن العقارات',
-        image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=900&q=80',
-        demoUrl: 'https://github.com/omaralshatti/real-estate-portal',
-      },
-      {
-        id: 'p5',
-        title: 'موقع حجز مواعيد العيادات والمراكز الطبية',
-        image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=900&q=80',
-        demoUrl: 'https://github.com/omaralshatti/clinic-appointment-site',
-      },
-      {
-        id: 'p6',
-        title: 'موقع متجر إلكتروني متكامل وسريع',
-        image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=900&q=80',
-        demoUrl: 'https://github.com/omaralshatti/ecommerce-storefront-web',
-      },
-    ],
+    hero: {
+      headline: 'عمر الشطي',
+    },
+    work: {
+      sectionTitle: 'مشاريع تطوير المواقع',
+      viewDemo: 'عرض المشروع',
+    },
+    contact: {
+      sectionTitle: 'التواصل',
+      phoneLabel: 'الهاتف',
+      phoneValue: '+965 6677 3399',
+      whatsappLabel: 'واتساب',
+      whatsappValue: '+965 6677 3399',
+      emailLabel: 'البريد الإلكتروني',
+      emailValue: 'omar.alshatti@example.com',
+      locationLabel: 'الموقع',
+      locationValue: 'مدينة الكويت، الكويت',
+      githubLabel: 'جيت هَب',
+      linkedinLabel: 'لينكد إن',
+    },
+    footer: {
+      copyright: '© 2026 عمر الشطي. طالب علوم حاسوب، جامعة الخليج.',
+      dashboardLink: 'لوحة التحكم',
+      lastUpdatedPrefix: 'آخر تحديث',
+    },
+    whatsappAria: 'تواصل عبر واتساب',
   },
 };
 
@@ -190,6 +132,9 @@ interface LocaleContextValue {
   setLocale: (l: Locale) => void;
   t: Translations;
   projects: ProjectItem[];
+  lastUpdatedEnabled: boolean;
+  lastUpdatedAt: string | null;
+  refreshPortfolioData: () => Promise<void>;
   mobileMenuOpen: boolean;
   setMobileMenuOpen: (open: boolean) => void;
 }
@@ -199,16 +144,97 @@ const LocaleContext = createContext<LocaleContextValue | null>(null);
 export function LocaleProvider({ children }: { children: React.ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>('en');
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
+  const [rawProjects, setRawProjects] = useState<PortfolioProject[]>(DEFAULT_PROJECTS);
+  const [lastUpdatedEnabled, setLastUpdatedEnabled] = useState<boolean>(false);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<string | null>(null);
 
   const dir: Direction = locale === 'ar' ? 'rtl' : 'ltr';
 
   useEffect(() => {
-    // Synchronize HTML element lang and dir attributes dynamically
     if (typeof document !== 'undefined') {
       document.documentElement.lang = locale;
       document.documentElement.dir = dir;
     }
   }, [locale, dir]);
+
+  const refreshPortfolioData = useCallback(async () => {
+    // Check if demo edits exist locally first
+    if (typeof window !== 'undefined') {
+      const demoProjectsRaw = window.localStorage.getItem(DEMO_PROJECTS_STORAGE_KEY);
+      if (demoProjectsRaw) {
+        try {
+          const parsed = JSON.parse(demoProjectsRaw) as PortfolioProject[];
+          if (Array.isArray(parsed)) {
+            setRawProjects(parsed);
+          }
+        } catch {
+          // ignore malformed cache
+        }
+      }
+
+      const demoSettingsRaw = window.localStorage.getItem(DEMO_SETTINGS_STORAGE_KEY);
+      if (demoSettingsRaw) {
+        try {
+          const parsedSettings = JSON.parse(demoSettingsRaw) as {
+            lastUpdatedEnabled?: boolean;
+            lastUpdatedAt?: string | null;
+          };
+          setLastUpdatedEnabled(Boolean(parsedSettings.lastUpdatedEnabled));
+          setLastUpdatedAt(parsedSettings.lastUpdatedAt ?? null);
+        } catch {
+          // ignore malformed cache
+        }
+      }
+    }
+
+    try {
+      const projectsQuery = query(collection(db, 'projects'), orderBy('date', 'desc'));
+      const snapshot = await getDocs(projectsQuery);
+      if (!snapshot.empty) {
+        const fetched: PortfolioProject[] = snapshot.docs.map((d) => {
+          const data = d.data();
+          return {
+            id: d.id,
+            title: String(data.title || ''),
+            titleAr: String(data.titleAr || data.title || ''),
+            description: String(data.description || ''),
+            descriptionAr: String(data.descriptionAr || data.description || ''),
+            date: String(data.date || ''),
+            imageUrl: String(data.imageUrl || ''),
+            demoUrl: String(data.demoUrl || ''),
+          };
+        });
+        setRawProjects(fetched);
+      }
+    } catch {
+      // Keep cached or default projects if Firestore collection is not yet populated
+    }
+
+    try {
+      const settingsSnap = await getDoc(doc(db, 'site_settings', 'main'));
+      if (settingsSnap.exists()) {
+        const data = settingsSnap.data();
+        setLastUpdatedEnabled(Boolean(data.lastUpdatedEnabled));
+        if (data.updatedAt && typeof data.updatedAt.toDate === 'function') {
+          setLastUpdatedAt(data.updatedAt.toDate().toISOString());
+        }
+      }
+    } catch {
+      // Keep cached settings if Firestore doc is not yet populated
+    }
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      if (!active) return;
+      await refreshPortfolioData();
+    };
+    void load();
+    return () => {
+      active = false;
+    };
+  }, [refreshPortfolioData]);
 
   const toggleLocale = () => {
     setLocaleState((prev) => (prev === 'en' ? 'ar' : 'en'));
@@ -218,7 +244,14 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
     setLocaleState(l);
   };
 
-  const { t, projects } = contentData[locale];
+  const t = contentData[locale];
+
+  const projects: ProjectItem[] = rawProjects.map((item) => ({
+    id: item.id,
+    title: locale === 'ar' ? item.titleAr || item.title : item.title,
+    image: item.imageUrl,
+    demoUrl: item.demoUrl,
+  }));
 
   return (
     <LocaleContext.Provider
@@ -229,6 +262,9 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
         setLocale,
         t,
         projects,
+        lastUpdatedEnabled,
+        lastUpdatedAt,
+        refreshPortfolioData,
         mobileMenuOpen,
         setMobileMenuOpen,
       }}

@@ -17,10 +17,10 @@ export default function ContactSection() {
   };
 
   return (
-    <section id="contact" aria-label={t.contact.sectionTitle} className="py-20 sm:py-28 px-4 sm:px-6 lg:px-8">
+    <section id="contact" aria-label={t.contact.sectionTitle} className="pt-8 sm:pt-12 pb-16 sm:pb-24 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto">
         {/* Section title with subtle dot indicator */}
-        <div className="mb-12 sm:mb-16 flex items-center gap-3">
+        <div className="mb-8 sm:mb-10 flex items-center gap-3">
           <span className="w-2 h-2 rounded-full bg-[#3B82F6]" aria-hidden="true" />
           <h2 className="text-xl sm:text-2xl font-semibold tracking-tight text-[#F2F4F8]">
             {t.contact.sectionTitle}

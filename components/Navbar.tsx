@@ -1,9 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
 import { useLocale } from '@/lib/locale-context';
 import { Languages, Menu, X, Phone, MessageCircle, Mail } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+
+const LOGO_URL = 'https://ik.imagekit.io/imgy4/Images%20used%20in%20websites/p8.png';
 
 export default function Navbar() {
   const { locale, dir, toggleLocale, t, mobileMenuOpen, setMobileMenuOpen } = useLocale();
@@ -26,15 +30,23 @@ export default function Navbar() {
       <header className="sticky top-0 z-40 w-full px-4 sm:px-6 lg:px-8 pt-3 pb-3">
         <nav
           aria-label="Main Navigation"
-          className="max-w-6xl mx-auto flex items-center justify-between px-4 sm:px-8 py-3.5 rounded-2xl glass-panel shadow-lg shadow-black/20"
+          className="max-w-6xl mx-auto flex items-center justify-between px-4 sm:px-8 py-3 rounded-2xl glass-panel shadow-lg shadow-black/20"
         >
-          {/* Student name / brand mark */}
-          <a
-            href="#"
-            className="text-sm sm:text-base font-semibold tracking-wide text-[#F2F4F8] hover:text-[#3B82F6] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6] rounded"
+          {/* Logo and student name brand mark */}
+          <Link
+            href="/"
+            className="flex items-center gap-3 text-sm sm:text-base font-semibold tracking-wide text-[#F2F4F8] hover:text-[#3B82F6] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6] rounded-lg"
           >
-            {locale === 'ar' ? 'عمر الشطي' : 'Omar Al-Shatti'}
-          </a>
+            <Image
+              src={LOGO_URL}
+              alt="Omar Al-Shatti Logo"
+              width={36}
+              height={36}
+              referrerPolicy="no-referrer"
+              className="w-8 h-8 sm:w-9 sm:h-9 object-contain rounded-lg shrink-0"
+            />
+            <span>{locale === 'ar' ? 'عمر الشطي' : 'Omar Al-Shatti'}</span>
+          </Link>
 
           {/* Right-side controls */}
           <div className="flex items-center gap-3 sm:gap-6">
@@ -106,12 +118,22 @@ export default function Navbar() {
                 isRtl ? 'left-0 border-r' : 'right-0 border-l'
               } w-[280px] max-w-[85vw] bg-[#122544]/95 backdrop-blur-xl border-[#3B82F6]/25 p-6 flex flex-col justify-between shadow-2xl shadow-black/50`}
             >
-              {/* Drawer Top: Name & Close button */}
+              {/* Drawer Top: Logo, Name & Close button */}
               <div>
                 <div className="flex items-center justify-between pb-6 border-b border-[#3B82F6]/15">
-                  <span className="text-sm font-semibold tracking-wide text-[#F2F4F8]">
-                    {locale === 'ar' ? 'عمر الشطي' : 'Omar Al-Shatti'}
-                  </span>
+                  <div className="flex items-center gap-2.5">
+                    <Image
+                      src={LOGO_URL}
+                      alt="Omar Al-Shatti Logo"
+                      width={28}
+                      height={28}
+                      referrerPolicy="no-referrer"
+                      className="w-7 h-7 object-contain rounded-md"
+                    />
+                    <span className="text-sm font-semibold tracking-wide text-[#F2F4F8]">
+                      {locale === 'ar' ? 'عمر الشطي' : 'Omar Al-Shatti'}
+                    </span>
+                  </div>
                   <button
                     type="button"
                     onClick={() => setMobileMenuOpen(false)}

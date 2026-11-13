@@ -1,0 +1,191 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net: default-deny all unspecified paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && request.auth.token.email_verified == true
+        && (
+          request.auth.token.email == 'ali144.growth@gmail.com'
+          || exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+        );
+    }
+
+    function isValidProject(data) {
+      return data.keys().hasAll([
+          'title',
+          'titleAr',
+          'description',
+          'descriptionAr',
+          'date',
+          'imageUrl',
+          'demoUrl',
+          'ownerId',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'title',
+          'titleAr',
+          'description',
+          'descriptionAr',
+          'date',
+          'imageUrl',
+          'demoUrl',
+          'ownerId',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 140
+        && data.titleAr is string && data.titleAr.size() >= 1 && data.titleAr.size() <= 140
+        && data.description is string && data.description.size() >= 1 && data.description.size() <= 600
+        && data.descriptionAr is string && data.descriptionAr.size() >= 1 && data.descriptionAr.size() <= 600
+        && data.date is string && data.date.size() >= 1 && data.date.size() <= 40
+        && data.imageUrl is string && data.imageUrl.size() >= 1 && data.imageUrl.size() <= 650000
+        && data.demoUrl is string && data.demoUrl.size() >= 1 && data.demoUrl.size() <= 1000
+        && data.ownerId is string && isValidId(data.ownerId)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidSiteSettings(data) {
+      return data.keys().hasAll(['lastUpdatedEnabled', 'updatedAt', 'updatedBy'])
+        && data.keys().hasOnly(['lastUpdatedEnabled', 'updatedAt', 'updatedBy'])
+        && data.lastUpdatedEnabled is bool
+        && data.updatedAt is timestamp
+        && data.updatedBy is string && data.updatedBy.size() >= 1 && data.updatedBy.size() <= 128;
+    }
+
+    function isValidCvDocument(data) {
+      return data.keys().hasAll([
+          'fileName',
+          'mimeType',
+          'sizeBytes',
+          'base64Data',
+          'uploadedAt',
+          'updatedBy'
+        ])
+        && data.keys().hasOnly([
+          'fileName',
+          'mimeType',
+          'sizeBytes',
+          'base64Data',
+          'uploadedAt',
+          'updatedBy'
+        ])
+        && data.fileName is string && data.fileName.size() >= 1 && data.fileName.size() <= 200
+        && data.mimeType is string && data.mimeType.size() >= 1 && data.mimeType.size() <= 100
+        && data.sizeBytes is number && data.sizeBytes > 0 && data.sizeBytes <= 750000
+        && data.base64Data is string && data.base64Data.size() >= 1 && data.base64Data.size() <= 950000
+        && data.uploadedAt is timestamp
+        && data.updatedBy is string && data.updatedBy.size() >= 1 && data.updatedBy.size() <= 128;
+    }
+
+    // Public portfolio projects (read-only for visitors, full CRUD for verified admin)
+    match /projects/{projectId} {
+      allow get: if isValidId(projectId);
+      allow list: if resource.data.title is string;
+      allow create: if isAdmin()
+        && isValidId(projectId)
+        && isValidProject(incoming())
+        && incoming().ownerId == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isAdmin()
+        && isValidId(projectId)
+        && isValidProject(incoming())
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'title',
+          'titleAr',
+          'description',
+          'descriptionAr',
+          'date',
+          'imageUrl',
+          'demoUrl',
+          'updatedAt'
+        ]);
+      allow delete: if isAdmin() && isValidId(projectId);
+    }
+
+    // Site settings (singleton 'main')
+    match /site_settings/{settingId} {
+      allow get: if isValidId(settingId) && settingId == 'main';
+      allow list: if false;
+      allow create: if isAdmin()
+        && isValidId(settingId)
+        && settingId == 'main'
+        && isValidSiteSettings(incoming())
+        && incoming().updatedBy == request.auth.uid
+        && incoming().updatedAt == request.time;
+      allow update: if isAdmin()
+        && isValidId(settingId)
+        && settingId == 'main'
+        && isValidSiteSettings(incoming())
+        && incoming().updatedBy == request.auth.uid
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'lastUpdatedEnabled',
+          'updatedAt',
+          'updatedBy'
+        ]);
+      allow delete: if false;
+    }
+
+    // Uploaded CV document (singleton 'active')
+    match /cv_documents/{docId} {
+      allow get: if isValidId(docId) && docId == 'active';
+      allow list: if false;
+      allow create: if isAdmin()
+        && isValidId(docId)
+        && docId == 'active'
+        && isValidCvDocument(incoming())
+        && incoming().updatedBy == request.auth.uid
+        && incoming().uploadedAt == request.time;
+      allow update: if isAdmin()
+        && isValidId(docId)
+        && docId == 'active'
+        && isValidCvDocument(incoming())
+        && incoming().updatedBy == request.auth.uid
+        && incoming().uploadedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'fileName',
+          'mimeType',
+          'sizeBytes',
+          'base64Data',
+          'uploadedAt',
+          'updatedBy'
+        ]);
+      allow delete: if isAdmin() && isValidId(docId) && docId == 'active';
+    }
+
+    // Admin registry (read-only by verified admin, no client writes)
+    match /admins/{adminId} {
+      allow get: if isAdmin() && isValidId(adminId);
+      allow list: if false;
+      allow write: if false;
+    }
+  }
+}

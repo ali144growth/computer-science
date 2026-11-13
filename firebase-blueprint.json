@@ -1,0 +1,196 @@
+{
+  "entities": {
+    "Project": {
+      "title": "Project",
+      "description": "Portfolio web development project displayed on the public site and managed from the admin dashboard.",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Project name in English",
+          "minLength": 1,
+          "maxLength": 140
+        },
+        "titleAr": {
+          "type": "string",
+          "description": "Project name in Arabic",
+          "minLength": 1,
+          "maxLength": 140
+        },
+        "description": {
+          "type": "string",
+          "description": "Project summary description shown in the admin dashboard",
+          "minLength": 1,
+          "maxLength": 600
+        },
+        "descriptionAr": {
+          "type": "string",
+          "description": "Arabic project summary description shown in the admin dashboard",
+          "minLength": 1,
+          "maxLength": 600
+        },
+        "date": {
+          "type": "string",
+          "description": "Project date label (e.g., 2026-10 or Oct 2026)",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "Uploaded screenshot data URI or image URL for the project card",
+          "minLength": 1,
+          "maxLength": 650000
+        },
+        "demoUrl": {
+          "type": "string",
+          "description": "Live demo or repository URL",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "UID of the admin who created the project",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server last update timestamp"
+        }
+      },
+      "required": [
+        "title",
+        "titleAr",
+        "description",
+        "descriptionAr",
+        "date",
+        "imageUrl",
+        "demoUrl",
+        "ownerId",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "SiteSettings": {
+      "title": "SiteSettings",
+      "description": "Global site widget toggle state and last updated metadata.",
+      "type": "object",
+      "properties": {
+        "lastUpdatedEnabled": {
+          "type": "boolean",
+          "description": "Whether the Last Updated status widget is active"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of the latest toggle update"
+        },
+        "updatedBy": {
+          "type": "string",
+          "description": "Admin UID who updated the setting",
+          "minLength": 1,
+          "maxLength": 128
+        }
+      },
+      "required": ["lastUpdatedEnabled", "updatedAt", "updatedBy"]
+    },
+    "CvDocument": {
+      "title": "CvDocument",
+      "description": "Uploaded student CV file stored for admin management and download.",
+      "type": "object",
+      "properties": {
+        "fileName": {
+          "type": "string",
+          "description": "Original filename of the uploaded CV",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "mimeType": {
+          "type": "string",
+          "description": "MIME type of the uploaded CV",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "sizeBytes": {
+          "type": "number",
+          "description": "File size in bytes"
+        },
+        "base64Data": {
+          "type": "string",
+          "description": "Data URL encoded CV file payload",
+          "minLength": 1,
+          "maxLength": 950000
+        },
+        "uploadedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server upload timestamp"
+        },
+        "updatedBy": {
+          "type": "string",
+          "description": "Admin UID who uploaded the CV",
+          "minLength": 1,
+          "maxLength": 128
+        }
+      },
+      "required": [
+        "fileName",
+        "mimeType",
+        "sizeBytes",
+        "base64Data",
+        "uploadedAt",
+        "updatedBy"
+      ]
+    },
+    "AdminUser": {
+      "title": "AdminUser",
+      "description": "Authorized admin account entry.",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "maxLength": 200
+        },
+        "addedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["email", "addedAt"]
+    }
+  },
+  "firestore": {
+    "/projects/{projectId}": {
+      "schema": {
+        "$ref": "#/entities/Project"
+      },
+      "description": "Collection of portfolio projects displayed publicly and edited via the admin dashboard."
+    },
+    "/site_settings/{settingId}": {
+      "schema": {
+        "$ref": "#/entities/SiteSettings"
+      },
+      "description": "Stores site configuration including the Last Updated widget toggle."
+    },
+    "/cv_documents/{docId}": {
+      "schema": {
+        "$ref": "#/entities/CvDocument"
+      },
+      "description": "Stores the uploaded CV document metadata and payload."
+    },
+    "/admins/{adminId}": {
+      "schema": {
+        "$ref": "#/entities/AdminUser"
+      },
+      "description": "Allowlist of admin UIDs permitted to manage portfolio content."
+    }
+  }
+}
